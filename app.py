@@ -1,3 +1,9 @@
+import streamlit as st           # <--- ESTA ES LA LÍNEA QUE FALTA
+from supabase import create_client
+
+# El resto de tu código igual...
+st.title("📍 Ahorro de Proximidad")
+
 if st.button("Buscar"):
     # Buscamos en la tabla de precios de tu Supabase real
     res = supabase.table("precios").select("precio, tiendas(nombre, direccion), productos(nombre)").eq("productos.nombre", producto).execute()
