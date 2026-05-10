@@ -1,20 +1,21 @@
 import streamlit as st
 from supabase import create_client
 
-# Credenciales directas (ya verificadas)
-URL = "https://ibqsxnnogdxffzahlmub.supabase.co"
-KEY = "EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlicXN4bm5vZ2R4ZmZ0YWhsbXViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzNTU5NDgsImV4cCI6MjA5MzkzMTk0OH0.kh1ADj3hYJrlBRUqKRnHiktCLPd02Pwz3yWWFV3H59k"
+# Limpiamos la URL y la KEY de cualquier espacio invisible
+URL = "https://ibqsxnnogdxffzahlmub.supabase.co".strip()
+KEY = "EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlicXN4bm5vZ2R4ZmZ0YWhsbXViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzNTU5NDgsImV4cCI6MjA5MzkzMTk0OH0.kh1ADj3hYJrlBRUqKRnHiktCLPd02Pwz3yWWFV3H59k".strip()
 
 # Conectar
-supabase = create_client(URL, KEY)
+try:
+    supabase = create_client(URL, KEY)
+except Exception as e:
+    st.error(f"Error al inicializar cliente: {e}")
 
 st.title("📍 Ahorro de Proximidad")
 
-st.write("Pulsa el botón para ver si la base de datos responde.")
-
 if st.button("Ver tiendas"):
     try:
-        # Traemos las tiendas de Supabase
+        # Traemos las tiendas
         res = supabase.table("tiendas").select("*").execute()
         
         if res.data:
@@ -22,12 +23,10 @@ if st.button("Ver tiendas"):
             for t in res.data:
                 st.info(f"Tienda: {t['nombre']}")
         else:
-            st.warning("Conectado, pero no hay tiendas creadas.")
+            st.warning("Conectado, pero la tabla está vacía.")
             
     except Exception as e:
-        st.error(f"Error: {e}")
+        st.error(f"Error de red: {e}")
 
 st.divider()
 st.camera_input("Escanear Ticket")
-
-
