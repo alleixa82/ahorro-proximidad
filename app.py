@@ -1,42 +1,46 @@
 import streamlit as st
 from supabase import create_client
 
-# Credenciales
+# 1. Credenciales limpias (He quitado cualquier espacio invisible)
 URL = "https://ibqsxnnogdxffzahlmub.supabase.co"
 KEY = "EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlicXN4bm5vZ2R4ZmZ0YWhsbXViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzNTU5NDgsImV4cCI6MjA5MzkzMTk0OH0.kh1ADj3hYJrlBRUqKRnHiktCLPd02Pwz3yWWFV3H59k"
-supabase = create_client(URL, KEY)
+
+# Inicializamos conexión
+try:
+    supabase = create_client(URL, KEY)
+except Exception as e:
+    st.error("Error al configurar la conexión")
 
 st.title("📍 Ahorro de Proximidad")
 
-# --- BOTÓN DE CARGA INICIAL (Solo para hoy) ---
-if st.sidebar.button("🚀 Cargar Datos de Prueba"):
-    try:
-        # Insertamos una tienda y un producto para probar
-        st.sidebar.write("Cargando...")
-        t = supabase.table("tiendas").insert({"nombre": "Mercadona Prueba", "latitud": 40.4, "longitud": -3.7}).execute()
-        p = supabase.table("productos").insert({"nombre": "Aceite de Oliva", "marca": "Hacendado"}).execute()
-        
-        # Sacamos los IDs para el precio
-        id_t = t.data[0]['id']
-        id_p = p.data[0]['id']
-        
-        supabase.table("precios").insert({"id_producto": id_p, "id_tienda": id_t, "precio": 8.50}).execute()
-        st.sidebar.success("✅ ¡Datos cargados con éxito!")
-    except Exception as e:
-        st.sidebar.error(f"Error: {e}")
+# 2. Formulario de búsqueda
+with st.form("buscador"):
+    producto = st.text_input("¿Qué buscas?", "Aceite")
+    boton = st.form_submit_button("Ejecutar Búsqueda")
 
-# --- BUSCADOR ---
-producto = st.text_input("¿Qué buscas?", "Aceite")
-
-if st.button("Ejecutar Búsqueda"):
+if boton:
     try:
-        # Buscamos en la tabla de precios y unimos con productos y tiendas
-        res = supabase.table("precios").select("precio, productos(nombre), tiendas(nombre)").execute()
+        # Intentamos una consulta súper simple a la tabla tiendas
+        res = supabase.table("tiendas").select("*").execute()
         
         if res.data:
-            for r in res.data:
-                st.success(f"🛒 {r['productos']['nombre']}: {r['precio']}€ en {r['tiendas']['nombre']}")
+            st.success(f"✅ ¡Conexión OK! Encontradas {len(res.data)} tiendas.")
+            for t in res.data:
+                st.write(f"🏠 {t['nombre']}")
         else:
-            st.warning("No hay resultados. ¿Has pulsado el botón de carga en el lateral?")
+            st.warning("📡 Conectado, pero no hay datos. ¡Usa el botón de abajo para cargar demo!")
+            
     except Exception as e:
-        st.error(f"Error al buscar: {e}")
+        st.error(f"❌ Error de red: {e}")
+
+# 3. BOTÓN MÁGICO PARA CARGAR DATOS DESDE EL MÓVIL
+st.divider()
+if st.button("🚀 CARGAR DATOS DE PRUEBA"):
+    try:
+        # Insertamos una tienda de prueba directamente desde la App
+        test_tienda = {"nombre": "Mercadona Prueba", "latitud": 40.0, "longitud": -3.0}
+        supabase.table("tiendas").insert(test_tienda).execute()
+        st.balloons()
+        st.success("¡Datos cargados! Dale a 'Buscar' ahora.")
+    except Exception as e:
+        st.error(f"No se pudo cargar: {e}")
